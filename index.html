@@ -1,220 +1,147 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-    <meta charset="UTF-8"><meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<meta name="description"
-      content="Aplikasi Google Apps Script">
-
-<title>Monitoring Kelas</title>
-
-<style>
-    * {
-        box-sizing: border-box;
-    }
-
-    html,
-    body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        font-family: Arial, Helvetica, sans-serif;
-        background: #f5f5f5;
-    }
-
-    .app-container {
-        width: 100%;
-        height: 100vh;
-        position: relative;
-    }
-
-    iframe {
-        width: 100%;
-        height: 100%;
-        border: 0;
-        display: block;
-        background: white;
-    }
-
-    .loading {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: white;
-        z-index: 10;
-        transition: opacity 0.3s ease;
-    }
-
-    .loading-content {
-        text-align: center;
-    }
-
-    .spinner {
-        width: 42px;
-        height: 42px;
-        margin: 0 auto 15px;
-
-        border: 4px solid #e0e0e0;
-        border-top: 4px solid #4285f4;
-
-        border-radius: 50%;
-
-        animation: spin 1s linear infinite;
-    }
-
-    .loading-text {
-        font-size: 14px;
-        color: #666;
-    }
-
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplikasi Google Apps Script Monitoring Kelas">
+    <title>Monitoring Kelas</title>
+    <style>
+        * {
+            box-sizing: border-box;
         }
 
-        to {
-            transform: rotate(360deg);
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
         }
-    }
 
-    .error {
-        display: none;
-        position: absolute;
-        inset: 0;
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
 
-        justify-content: center;
-        align-items: center;
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            background: white;
+        }
 
-        background: white;
+        .loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #ffffff;
+            z-index: 10;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
 
-        padding: 30px;
-        text-align: center;
-    }
+        .loading-content {
+            text-align: center;
+        }
 
-    .error-content {
-        max-width: 500px;
-    }
+        .spinner {
+            width: 45px;
+            height: 45px;
+            margin: 0 auto 16px;
+            border: 4px solid #e9ecef;
+            border-top: 4px solid #1a73e8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
-    .error h2 {
-        margin-bottom: 10px;
-        color: #333;
-    }
+        .loading-text {
+            font-size: 15px;
+            color: #495057;
+            font-weight: 500;
+        }
 
-    .error p {
-        color: #666;
-        line-height: 1.6;
-    }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
-    .error a {
-        display: inline-block;
-        margin-top: 15px;
-        padding: 10px 18px;
+        .fallback-bar {
+            position: fixed;
+            bottom: 12px;
+            right: 12px;
+            z-index: 100;
+            background: rgba(33, 37, 41, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 8px 14px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
 
-        background: #4285f4;
-        color: white;
+        .fallback-bar a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-        text-decoration: none;
-        border-radius: 6px;
-    }
+        .fallback-bar a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
 
-    .error a:hover {
-        background: #3367d6;
-    }
-</style>
-
-</head><body><div class="app-container"><div class="loading" id="loading">
-
-    <div class="loading-content">
-
-        <div class="spinner"></div>
-
-        <div class="loading-text">
-            Memuat aplikasi...
+<div class="app-container">
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text">Memuat Aplikasi Monitoring Kelas...</div>
         </div>
-
     </div>
 
-</div>
+    <!-- Tambahkan atribut allow untuk akses kamera / lokasi jika aplikasi membutuhkannya -->
+    <iframe
+        id="appFrame"
+        src=https://script.google.com/macros/s/AKfycbzrwl7U8HIjTFfXZfNCLCC2O2udZwkRcAyuD14o8pdDPJBQUli_eIFuMSPZxAIhCZ2t/exec"
+        allow="geolocation; camera; microphone; clipboard-read; clipboard-write"
+        allowfullscreen>
+    </iframe>
 
-<iframe
-    id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbzHX5oEPK5neemTHBT-LKjiUMHXI0_m7QITKkv3ggsUIFmcPpiRYuf5gpdsxYLYTO-t/exec"
-    allow="clipboard-read; clipboard-write"
-    allowfullscreen>
-</iframe>
-
-
-<div class="error" id="error">
-
-    <div class="error-content">
-
-        <h2>Aplikasi tidak dapat dimuat</h2>
-
-        <p>
-            Aplikasi dapat ditampilkan.
-            Silakan coba buka aplikasi secara langsung.
-        </p>
-
-        <a
-            href="https://script.google.com/macros/s/AKfycbzHX5oEPK5neemTHBT-LKjiUMHXI0_m7QITKkv3ggsUIFmcPpiRYuf5gpdsxYLYTO-t/exec"
-            target="_blank"
-            rel="noopener noreferrer">
-            Buka Aplikasi
+    <!-- Tombol bantuan jika browser memblokir cookie iframe -->
+    <div class="fallback-bar">
+        <a href="https://script.google.com/macros/s/AKfycbzrwl7U8HIjTFfXZfNCLCC2O2udZwkRcAyuD14o8pdDPJBQUli_eIFuMSPZxAIhCZ2t/exec" target="_blank" rel="noopener noreferrer">
+            🚀 Buka Langsung (Jika Kendala Display)
         </a>
-
     </div>
-
 </div>
 
-</div><script>
-
+<script>
     const iframe = document.getElementById("appFrame");
     const loading = document.getElementById("loading");
-    const error = document.getElementById("error");
 
-
-    iframe.addEventListener("load", function () {
-
-        setTimeout(function () {
-
+    function hideLoading() {
+        if (loading) {
             loading.style.opacity = "0";
-
             setTimeout(function () {
                 loading.style.display = "none";
-            }, 300);
-
-        }, 300);
-
-    });
-
-
-    setTimeout(function () {
-
-        if (loading.style.display !== "none") {
-
-            loading.style.opacity = "0";
-
-            setTimeout(function () {
-                loading.style.display = "none";
-            }, 300);
-
+            }, 400);
         }
+    }
 
-    }, 10000);
+    // Hilangkan loading layar saat iframe selesai dimuat
+    iframe.addEventListener("load", hideLoading);
 
+    // Timeout pengaman (maksimal 8 detik) jika event load terlambat
+    setTimeout(hideLoading, 8000);
+</script>
 
-    window.addEventListener("message", function(event) {
-
-        /*
-         * Pesan dari Google Apps Script dapat diproses
-         * di sini jika suatu saat diperlukan.
-         */
-
-    });
-
-</script></body>
+</body>
 </html>
