@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monitoring Kehadiran Kelas</title>
+    <title>Monitoring Kelas OB</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- jsQR Library -->
+    <!-- jsQR Library (Sangat ringan dan stabil untuk barcode scanning via Canvas) -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
     <style>
-        body { background-color: #f3f4f6; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overscroll-behavior-y: contain; }
-        .step-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
-        .big-btn { width: 100%; padding: 14px; font-size: 1rem; font-weight: 700; border-radius: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: all 0.2s; touch-action: manipulation; }
+        body { background-color: #f3f4f6; font-family: 'Segoe UI', sans-serif; overscroll-behavior-y: contain; }
+        .step-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .big-btn { width: 100%; padding: 16px; font-size: 1.1rem; font-weight: bold; border-radius: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: all 0.2s; touch-action: manipulation; }
         .big-btn:active { transform: scale(0.98); }
-        .input-besar { width: 100%; padding: 12px 14px; font-size: 1rem; border: 2px solid #e5e7eb; border-radius: 10px; margin-bottom: 12px; background-color: #f9fafb; transition: all 0.2s; }
-        .input-besar:focus { outline: none; border-color: #2563eb; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
-        .jadwal-box { background-color: #eff6ff; border: 2px dashed #93c5fd; border-radius: 12px; padding: 16px; margin-top: 12px; }
+        .input-besar { width: 100%; padding: 14px; font-size: 1.1rem; border: 2px solid #e5e7eb; border-radius: 10px; margin-bottom: 12px; background-color: #f9fafb; }
+        .input-besar:focus { outline: none; border-color: #3b82f6; }
+        .jadwal-box { background-color: #eff6ff; border: 2px dashed #93c5fd; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
         
+        /* Container untuk Video Scanner & Kamera Selfie */
         .video-container { 
             width: 100%; 
             border-radius: 12px; 
@@ -30,58 +30,53 @@
             background: #000;
             display: none;
             margin-bottom: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
         }
         video { 
             width: 100%; 
             height: auto; 
-            max-height: 320px; 
+            max-height: 350px; /* Agar tidak terlalu tinggi di HP */
             object-fit: cover; 
             display: block; 
         }
         
+        /* Panduan kotak untuk Scanner QR */
         .qr-guideline {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 180px;
-            height: 180px;
-            border: 3px solid rgba(59, 130, 246, 0.9);
-            border-radius: 16px;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+            width: 200px;
+            height: 200px;
+            border: 3px solid rgba(59, 130, 246, 0.8); /* Warna Biru */
+            border-radius: 10px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Efek gelap di luar kotak */
             pointer-events: none;
         }
-        #canvasElement { display: none; }
+
+        #canvasElement { display: none; } /* Canvas disembunyikan, hanya untuk proses internal */
     </style>
 </head>
-
 <body class="p-4 pb-20">
+
     <div class="max-w-md mx-auto">
-        <!-- Header & Config -->
-        <div class="flex justify-between items-center mb-4 mt-2">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Cek Kehadiran Kelas</h1>
-                <p class="text-gray-500 text-xs">Sistem Laporan Real-Time Perkuliahan</p>
-            </div>
-            <button onclick="bukaModalSetting()" class="text-gray-400 hover:text-blue-600 p-2 rounded-full hover:bg-white transition-colors" title="Pengaturan Server API">
+        <div class="relative text-center mb-6 mt-2">
+            <h1 class="text-2xl font-bold text-gray-800">Cek Kehadiran Kelas</h1>
+            <p class="text-gray-500 text-sm">Sistem Laporan Real-Time Perkuliahan</p>
+            <!-- Tombol Pengaturan (Gear) -->
+            <button type="button" onclick="bukaSetting()" class="absolute top-0 right-0 p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors">
                 <i class="ph ph-gear text-2xl"></i>
             </button>
-        </div>
-
-        <!-- Banner URL Status -->
-        <div id="url-alert" class="hidden mb-4 bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-xl flex items-center justify-between">
-            <span class="flex items-center gap-1.5"><i class="ph ph-warning-circle text-base text-amber-600"></i> URL Server Apps Script belum diatur.</span>
-            <button onclick="bukaModalSetting()" class="underline font-bold text-amber-900">Atur URL</button>
         </div>
 
         <!-- STEP 1: LOKASI & BARCODE -->
         <div class="step-card">
             <div class="flex items-center gap-2 mb-4">
-                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md">1</span>
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">1</span>
                 <h2 class="text-lg font-bold text-gray-800">Lokasi Ruangan</h2>
             </div>
             
+            <!-- Video Container untuk Scanner -->
             <div id="scanner-container" class="video-container">
                 <video id="videoScanner" playsinline autoplay muted></video>
                 <div class="qr-guideline"></div>
@@ -91,10 +86,10 @@
                 <i class="ph ph-qr-code text-2xl"></i> Scan Barcode Ruangan
             </button>
             <button type="button" id="btn-batal-scan" class="big-btn bg-red-500 text-white hover:bg-red-600 shadow-lg hidden mt-2" onclick="batalScan()">
-                <i class="ph ph-x-circle text-2xl"></i> Batal Scan
+                Batal Scan
             </button>
 
-            <div class="mt-4 text-center text-xs text-gray-400 font-bold uppercase tracking-wider">- Atau Pilih Manual -</div>
+            <div class="mt-4 text-center text-sm text-gray-500 font-bold">- ATAU PILIH MANUAL -</div>
             
             <select id="pilihLantai" class="input-besar mt-2" onchange="updatePilihanRuangan()">
                 <option value="">-- Pilih Lantai / Gedung --</option>
@@ -112,79 +107,74 @@
 
         <!-- JADWAL DITEMUKAN (OTOMATIS) -->
         <div id="box-jadwal" class="step-card hidden">
-            <h2 class="text-md font-bold text-gray-800 flex items-center gap-2">
+            <h2 class="text-md font-bold text-gray-800 mb-2 flex items-center gap-2">
                 <i class="ph ph-chalkboard-teacher text-blue-600 text-xl"></i> Jadwal Saat Ini:
             </h2>
-            <div id="loading-jadwal" class="text-sm text-blue-600 font-semibold animate-pulse hidden my-3">
-                <i class="ph ph-spinner-gap animate-spin"></i> Memeriksa jadwal di Google Sheets...
+            <div id="loading-jadwal" class="text-sm text-blue-600 font-semibold animate-pulse hidden">
+                <i class="ph ph-spinner-gap animate-spin"></i> Mencari jadwal di ruangan ini...
             </div>
             <div id="info-jadwal" class="jadwal-box hidden">
-                <p class="text-xs text-blue-500 font-semibold uppercase tracking-wider mb-1">Mata Kuliah</p>
+                <p class="text-sm text-gray-500 mb-1">Mata Kuliah:</p>
                 <p id="info-mk" class="font-bold text-lg text-gray-800 leading-tight">Nama MK</p>
                 <hr class="my-2 border-blue-200">
-                <div class="space-y-1 text-sm">
-                    <p><strong>Dosen:</strong> <span id="info-dosen" class="text-gray-700"></span></p>
-                    <p><strong>Jurusan/Kelas:</strong> <span id="info-kelas" class="text-gray-700"></span></p>
-                    <p><strong>Jml Mahasiswa:</strong> <span id="info-jml" class="text-gray-700"></span></p>
-                </div>
+                <p class="text-sm"><strong>Dosen:</strong> <span id="info-dosen"></span></p>
+                <p class="text-sm"><strong>Jurusan/Kelas:</strong> <span id="info-kelas"></span></p>
+                <p class="text-sm"><strong>Jml Mhs:</strong> <span id="info-jml"></span></p>
             </div>
-            <div id="info-kosong" class="jadwal-box hidden bg-gray-50 border-gray-300">
-                <p class="text-sm text-gray-500 italic">Tidak ada jadwal kuliah tercatat pada jam ini, atau ruangan sedang tidak dipakai.</p>
+            <div id="info-kosong" class="jadwal-box hidden bg-gray-100 border-gray-300">
+                <p class="text-sm text-gray-600 italic">Tidak ada jadwal tercatat pada jam ini, atau ruangan kosong.</p>
             </div>
         </div>
 
         <!-- STEP 2: DATA MAHASISWA -->
         <div class="step-card">
             <div class="flex items-center gap-2 mb-4">
-                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md">2</span>
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">2</span>
                 <h2 class="text-lg font-bold text-gray-800">Data PJ Mata Kuliah</h2>
             </div>
-            <p class="text-xs text-gray-500 mb-3">Isi data Mahasiswa Penanggung Jawab (PJ):</p>
+            <p class="text-sm text-gray-500 mb-3">Minta Mahasiswa PJ mengisi ini:</p>
             
             <input type="text" id="pjNama" class="input-besar" placeholder="Nama Lengkap PJ">
             <input type="tel" id="pjNim" class="input-besar" placeholder="NIM PJ">
-            <input type="tel" id="pjHp" class="input-besar" placeholder="No. Handphone / WhatsApp">
+            <input type="tel" id="pjHp" class="input-besar" placeholder="No. Handphone PJ">
         </div>
 
         <!-- STEP 3: FOTO BUKTI -->
         <div class="step-card">
             <div class="flex items-center gap-2 mb-4">
-                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md">3</span>
+                <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">3</span>
                 <h2 class="text-lg font-bold text-gray-800">Foto Bukti Perkuliahan</h2>
             </div>
             
             <div id="hasil-foto-container" class="hidden text-center mb-4">
-                <img id="hasilFoto" class="rounded-xl mb-3 mx-auto max-h-48 border-4 border-green-500 shadow-md">
-                <button type="button" class="text-red-500 font-bold text-sm underline p-2 hover:text-red-700 transition-colors" onclick="hapusFoto()">
-                    <i class="ph ph-trash"></i> Hapus & Foto Ulang
-                </button>
+                <img id="hasilFoto" class="rounded-lg mb-3 mx-auto max-h-48 border-4 border-green-500 shadow-md">
+                <button type="button" class="text-red-500 font-bold underline p-2" onclick="hapusFoto()">Hapus Foto</button>
             </div>
 
+            <!-- Native Input untuk Kamera/Galeri agar bebas Bug di semua Browser -->
             <input type="file" id="inputFotoBawaan" accept="image/*" class="hidden" onchange="prosesFotoBawaan(event)">
             
-            <button type="button" id="btn-kamera-bawaan" class="big-btn bg-blue-600 text-white hover:bg-blue-700 shadow-lg" onclick="document.getElementById('inputFotoBawaan').click()">
+            <button type="button" id="btn-kamera-bawaan" class="big-btn bg-blue-600 text-white hover:bg-blue-700 shadow-lg mt-2" onclick="document.getElementById('inputFotoBawaan').click()">
                 <i class="ph ph-camera text-2xl"></i> Ambil / Upload Foto
             </button>
-            <p class="text-xs text-gray-400 mt-2 text-center">Gunakan kamera HP atau ambil file dari galeri.</p>
+            <p class="text-xs text-gray-500 mt-2 text-center">Gunakan kamera HP atau ambil file dari galeri.</p>
             
+            <!-- Canvas disembunyikan untuk resize gambar internal -->
             <canvas id="canvasElement" class="hidden"></canvas>
         </div>
 
         <!-- LOKASI & TOMBOL KIRIM -->
         <div class="text-center mt-6">
-            <p id="gps-status" class="text-xs font-semibold text-gray-500 mb-3 transition-colors duration-300">
-                <i class="ph ph-map-pin"></i> Mendeteksi Lokasi GPS...
-            </p>
-            <button id="btn-kirim" class="big-btn bg-green-600 text-white hover:bg-green-700 shadow-xl py-4 text-lg" onclick="kirimData()">
+            <p id="gps-status" class="text-sm font-semibold text-gray-500 mb-2"><i class="ph ph-map-pin"></i> Mendeteksi Lokasi GPS...</p>
+            <button id="btn-kirim" class="big-btn bg-green-600 text-white hover:bg-green-700 shadow-xl py-5 text-xl" onclick="kirimData()">
                 <i class="ph ph-paper-plane-tilt text-2xl"></i> KIRIM LAPORAN SEKARANG
             </button>
         </div>
+
     </div>
 
     <script>
-        // MASUKKAN URL GOOGLE APPS SCRIPT WEB APP ANDA DI SINI:
-        let SCRIPT_URL = localStorage.getItem("APPS_SCRIPT_URL") || "https://script.google.com/macros/s/AKfycbxSsEyfYuFQ12dER-7nRIhebcD5MqjB6eRdfcoIAaqLe3I7AqdNSoBDP0ktUxuZctbY/exec";
-
+        // --- 1. SETUP DATABASE RUANGAN ---
         const dbRuangan = {
             "Lantai 1": ["Lab PGSD", "Lab MTK", "Lab Bio", "Lab Bing", "Lab PBI", "Lab Kimia", "Lab IPA", "Lab BK", "Lab SOS", "Lab PAUD", "Lab Fisika", "Lab PPKN", "Lab Sejarah", "Lab PNF", "Lab PKH", "Lab PSP", "Lab PVTM", "Lab PVTE", "CC101", "CC102", "CC103", "CC104", "CC105", "CC106", "CC107", "CC108", "CC109", "CC110", "CC111", "CC112", "CC113", "CC114", "CC115", "CC116", "CC117", "CC118"],
             "Lantai 2": ["CC201", "CC202", "CC203", "CC204", "CC205", "CC206", "CC207", "CC208", "CC209", "CC210", "CC211", "CC212", "CC213", "CC214", "CC215"],
@@ -193,78 +183,68 @@
             "Lainnya": ["Online", "Sekolah"]
         };
 
+        // --- 2. VARIABEL GLOBAL ---
         let dataJadwalGlobal = { mk: "-", dosen: "-", kelas: "-", jurusan: "-" };
         let fotoBase64 = null;
-        let lokasiGPS = "GPS Tidak Aktif / Opsional";
+        let lokasiGPS = "Opsional / GPS Tidak Aktif";
         
+        // Variabel Kamera
         let streamBelakang = null;
-        let scanAnimationId = null;
-        const canvas = document.getElementById("canvasElement");
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        let scanInterval = null;
+        let canvas = null;
+        let ctx = null;
 
+        // Fungsi inisialisasi Canvas yang aman (Mencegah Crash Global)
+        function getCanvasCtx() {
+            if (!canvas) {
+                canvas = document.getElementById("canvasElement");
+                ctx = canvas.getContext("2d", { willReadFrequently: true });
+            }
+            return { canvas, ctx };
+        }
+
+        // --- 3. INISIALISASI (GEOLOCATION) ---
         window.onload = function() {
-            cekStatusUrl();
-
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(pos) { 
                         lokasiGPS = pos.coords.latitude + ", " + pos.coords.longitude; 
-                        const gpsEl = document.getElementById('gps-status');
-                        gpsEl.innerHTML = '<i class="ph ph-map-pin text-green-600"></i> Lokasi GPS Terdeteksi';
-                        gpsEl.classList.replace('text-gray-500', 'text-green-600');
+                        document.getElementById('gps-status').innerHTML = '<i class="ph ph-map-pin text-green-600"></i> Lokasi GPS Ditemukan';
+                        document.getElementById('gps-status').classList.replace('text-gray-500', 'text-green-600');
                     },
                     function(err) { 
                         lokasiGPS = "Akses GPS Ditolak / Timeout"; 
-                        const gpsEl = document.getElementById('gps-status');
-                        gpsEl.innerHTML = '<i class="ph ph-map-pin-line text-amber-600"></i> GPS Opsional (Tidak Aktif)';
-                        gpsEl.classList.replace('text-gray-500', 'text-amber-600');
+                        document.getElementById('gps-status').innerHTML = '<i class="ph ph-map-pin-line text-yellow-600"></i> Lokasi (GPS Opsional)';
                     },
                     { enableHighAccuracy: true, timeout: 5000 }
                 );
+            } else {
+                document.getElementById('gps-status').innerHTML = '<i class="ph ph-map-pin-line"></i> GPS Tidak Didukung Browser';
             }
         };
 
-        function cekStatusUrl() {
-            if (!SCRIPT_URL || SCRIPT_URL.includes("AKfycbx_GANTIKAN")) {
-                document.getElementById("url-alert").classList.remove("hidden");
-            } else {
-                document.getElementById("url-alert").classList.add("hidden");
-            }
-        }
-
-        function bukaModalSetting() {
-            Swal.fire({
-                title: 'Atur Web App URL Google Apps Script',
-                input: 'url',
-                inputLabel: 'Masukkan URL Deployment Web App Apps Script Anda:',
-                inputValue: SCRIPT_URL.includes("AKfycbx_GANTIKAN") ? "" : SCRIPT_URL,
-                placeholder: 'https://script.google.com/macros/s/AKfycbxSsEyfYuFQ12dER-7nRIhebcD5MqjB6eRdfcoIAaqLe3I7AqdNSoBDP0ktUxuZctbY/exec',
-                showCancelButton: true,
-                confirmButtonText: 'Simpan URL',
-                cancelButtonText: 'Batal',
-                confirmButtonColor: '#2563eb'
-            }).then((result) => {
-                if (result.isConfirmed && result.value) {
-                    SCRIPT_URL = result.value.trim();
-                    localStorage.setItem("APPS_SCRIPT_URL", SCRIPT_URL);
-                    cekStatusUrl();
-                    Swal.fire('Tersimpan!', 'URL Apps Script berhasil dikonfigurasi.', 'success');
-                }
-            });
-        }
-
+        // --- 4. FUNGSI UI DROPDOWN & JADWAL ---
         function updatePilihanRuangan() {
-            const lantai = document.getElementById("pilihLantai").value;
-            const selRuang = document.getElementById("pilihRuangan");
-            
-            selRuang.innerHTML = '<option value="">-- Pilih Ruangan --</option>';
-            document.getElementById("box-jadwal").classList.add("hidden");
-            
-            if (lantai && dbRuangan[lantai]) {
-                selRuang.disabled = false;
-                dbRuangan[lantai].forEach(r => { selRuang.add(new Option(r, r)); });
-            } else {
-                selRuang.disabled = true;
+            try {
+                const lantai = document.getElementById("pilihLantai").value;
+                const selRuang = document.getElementById("pilihRuangan");
+                
+                selRuang.innerHTML = '<option value="">-- Pilih Ruangan --</option>';
+                document.getElementById("box-jadwal").classList.add("hidden");
+                
+                if (lantai && dbRuangan[lantai]) {
+                    selRuang.disabled = false;
+                    dbRuangan[lantai].forEach(r => { 
+                        let opt = document.createElement('option');
+                        opt.value = r;
+                        opt.innerHTML = r;
+                        selRuang.appendChild(opt); 
+                    });
+                } else {
+                    selRuang.disabled = true;
+                }
+            } catch (err) {
+                console.error("Gagal load daftar ruangan:", err);
             }
         }
 
@@ -272,82 +252,120 @@
             let ruangan = kodeDariScanner || document.getElementById('pilihRuangan').value;
             if (!ruangan) return;
 
+            // Jika dipanggil dari scanner, sinkronkan ke dropdown manual
             if(kodeDariScanner) {
                 let selectRuangan = document.getElementById('pilihRuangan');
                 let optionExists = Array.from(selectRuangan.options).some(opt => opt.value === kodeDariScanner);
                 if(!optionExists) {
-                    selectRuangan.add(new Option(kodeDariScanner, kodeDariScanner));
+                    let opt = document.createElement('option');
+                    opt.value = kodeDariScanner;
+                    opt.innerHTML = kodeDariScanner;
+                    selectRuangan.appendChild(opt);
                 }
                 selectRuangan.value = kodeDariScanner;
-                document.getElementById('pilihLantai').value = ""; 
+                document.getElementById('pilihLantai').value = ""; // Reset lantai
                 selectRuangan.disabled = false;
             }
 
+            // UI Loading
             document.getElementById("box-jadwal").classList.remove("hidden");
             document.getElementById("loading-jadwal").classList.remove("hidden");
             document.getElementById("info-jadwal").classList.add("hidden");
             document.getElementById("info-kosong").classList.add("hidden");
 
-            // Mengambil Jadwal via fetch API ke Google Apps Script
-            const apiUrl = ${SCRIPT_URL}?action=getJadwal&ruangan=${encodeURIComponent(ruangan)};
-
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(res => {
-                    document.getElementById("loading-jadwal").classList.add("hidden");
-                    if(res && res.status) {
-                        document.getElementById("info-jadwal").classList.remove("hidden");
-                        document.getElementById("info-mk").innerText = res.mk;
-                        document.getElementById("info-dosen").innerText = res.dosen;
-                        document.getElementById("info-kelas").innerText = res.jurusan + " - Kls " + res.kelas;
-                        document.getElementById("info-jml").innerText = res.jmlMhs + " Mahasiswa";
-                        dataJadwalGlobal = { mk: res.mk, dosen: res.dosen, kelas: res.kelas, jurusan: res.jurusan };
-                    } else {
-                        document.getElementById("info-kosong").classList.remove("hidden");
-                        dataJadwalGlobal = { mk: "Kosong/Tidak Ada Jadwal", dosen: "-", kelas: "-", jurusan: "-" };
-                    }
-                })
-                .catch(err => {
-                    console.error("Gagal mengambil jadwal:", err);
-                    document.getElementById("loading-jadwal").classList.add("hidden");
+            const updateUI = (res) => {
+                document.getElementById("loading-jadwal").classList.add("hidden");
+                if(res && res.status) {
+                    document.getElementById("info-jadwal").classList.remove("hidden");
+                    document.getElementById("info-mk").innerText = res.mk || "-";
+                    document.getElementById("info-dosen").innerText = res.dosen || "-";
+                    document.getElementById("info-kelas").innerText = (res.jurusan || "") + " - Kls " + (res.kelas || "");
+                    document.getElementById("info-jml").innerText = (res.jmlMhs || "0") + " Mahasiswa";
+                    dataJadwalGlobal = { mk: res.mk, dosen: res.dosen, kelas: res.kelas, jurusan: res.jurusan };
+                } else {
                     document.getElementById("info-kosong").classList.remove("hidden");
-                    document.getElementById("info-kosong").innerHTML = '<p class="text-xs text-amber-600 italic">Gagal terhubung ke Apps Script. Pastikan URL Web App benar.</p>';
-                });
+                    dataJadwalGlobal = { mk: "Kosong/Tidak Ada Jadwal", dosen: "-", kelas: "-", jurusan: "-" };
+                }
+            };
+
+            // Menjalankan API ke Google Apps Script (Mendukung GitHub Pages via Fetch)
+            if (typeof google !== 'undefined' && google.script) {
+                google.script.run
+                    .withSuccessHandler(updateUI)
+                    .withFailureHandler(() => updateUI({status: false}))
+                    .getJadwalSekarang(ruangan);
+            } else {
+                const gasUrl = localStorage.getItem('gas_url');
+                if (!gasUrl) {
+                    document.getElementById("loading-jadwal").classList.add("hidden");
+                    if(typeof Swal !== 'undefined') Swal.fire('URL Belum Diset', 'Klik ikon Pengaturan (Gear) di kanan atas untuk memasukkan URL Apps Script.', 'warning');
+                    else alert('URL Apps Script belum diset. Klik ikon Gear di atas.');
+                    return;
+                }
+                
+                fetch(gasUrl + "?action=getJadwal&ruangan=" + encodeURIComponent(ruangan))
+                    .then(response => response.json())
+                    .then(data => updateUI(data))
+                    .catch(error => {
+                        console.error("Error Fetch:", error);
+                        updateUI({status: false});
+                        if(typeof Swal !== 'undefined') Swal.fire('Koneksi Gagal', 'Gagal memuat jadwal. Pastikan URL Apps Script benar.', 'error');
+                        else alert('Gagal memuat jadwal. Cek URL Apps Script.');
+                    });
+            }
         }
 
+        // --- 5. FUNGSI SCANNER BARCODE (API low-level stabil) ---
         async function mulaiScan() {
+            // Pengecekan perangkat sebelum mengakses media (Mencegah HANG)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                if(typeof Swal !== 'undefined') Swal.fire('Kamera Tidak Didukung', 'Browser ini tidak mendukung akses kamera langsung. Silakan pilih ruangan manual.', 'error');
+                else alert('Kamera tidak didukung di browser ini.');
+                return;
+            }
+
             const video = document.getElementById("videoScanner");
             const btnScan = document.getElementById('btn-scan');
             const btnBatal = document.getElementById('btn-batal-scan');
             const container = document.getElementById('scanner-container');
 
             try {
+                // Coba akses kamera belakang spesifik (environment) terlebih dahulu
                 try {
                     streamBelakang = await navigator.mediaDevices.getUserMedia({
                         video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
                         audio: false
                     });
                 } catch (e1) {
-                    streamBelakang = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    // Fallback jika tidak ada environment (misal di browser PC atau perangkat tertentu)
+                    streamBelakang = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    });
                 }
 
                 video.srcObject = streamBelakang;
-                video.setAttribute("playsinline", true);
+                video.setAttribute("playsinline", true); // Penting untuk iOS/Safari
                 video.play();
 
                 container.style.display = 'block';
                 btnScan.classList.add('hidden');
                 btnBatal.classList.remove('hidden');
 
-                scanAnimationId = requestAnimationFrame(tickScan);
+                // Tunggu video ready
+                requestAnimationFrame(tickScan);
                 
             } catch (err) {
                 console.error("Gagal akses kamera:", err);
-                Swal.fire({
-                    title: 'Izin Kamera Diperlukan',
-                    text: 'Silakan beri izin akses kamera di browser Anda untuk melakukan scan QR ruangan.',
-                    icon: 'warning'
-                });
+                if(typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Kamera Tidak Tersedia',
+                        text: 'Fitur barcode diblokir atau tidak didukung oleh browser Anda.',
+                        icon: 'info'
+                    });
+                } else {
+                    alert('Kamera Tidak Tersedia atau diblokir.');
+                }
                 batalScan();
             }
         }
@@ -355,46 +373,59 @@
         function tickScan() {
             const video = document.getElementById("videoScanner");
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const { canvas, ctx } = getCanvasCtx();
+
+                // Set canvas size sesuai video (diperkecil sedikit untuk performa)
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
+                
+                // Gambar frame ke canvas
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
+                // Ekstrak data piksel
                 var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                var code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert", 
-                });
+                
+                // Gunakan jsQR untuk mencari kode (Pengecekan eksistensi jsQR mencegah Hang)
+                var code = window.jsQR ? jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert", // Mempercepat performa
+                }) : null;
 
                 if (code && code.data) {
                     berhasilScan(code.data);
-                    return; 
+                    return; // Stop rekursi
                 }
             }
+            
+            // Loop terus selama stream aktif
             if (streamBelakang && streamBelakang.active) {
-                scanAnimationId = requestAnimationFrame(tickScan);
+                scanInterval = requestAnimationFrame(tickScan);
             }
         }
 
         function berhasilScan(hasilTeks) {
-            batalScan(); 
+            batalScan(); // Matikan scanner
+            
             Swal.fire({
-                title: 'Ruangan Terdeteksi!',
-                text: 'Kode Ruangan: ' + hasilTeks,
+                title: 'Berhasil!',
+                text: 'Ruangan ' + hasilTeks + ' ditemukan.',
                 icon: 'success',
                 timer: 1500,
                 showConfirmButton: false
             }).then(() => {
-                ruanganTerpilih(hasilTeks); 
+                ruanganTerpilih(hasilTeks); // Jalankan cek jadwal
             });
         }
 
         function batalScan() {
             matikanKamera(streamBelakang);
-            if(scanAnimationId) cancelAnimationFrame(scanAnimationId);
+            if(scanInterval) cancelAnimationFrame(scanInterval);
             document.getElementById('scanner-container').style.display = 'none';
             document.getElementById('btn-scan').classList.remove('hidden');
             document.getElementById('btn-batal-scan').classList.add('hidden');
         }
 
+
+        // --- 6. FUNGSI FOTO BUKTI (NATIVE & KOMPRESI) ---
         function prosesFotoBawaan(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -403,6 +434,7 @@
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
+                    // Resize maksimal 800px untuk performa dan hemat data
                     const MAX_WIDTH = 800;
                     const MAX_HEIGHT = 800;
                     let width = img.width;
@@ -414,12 +446,15 @@
                         if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                     }
 
+                    const { canvas, ctx } = getCanvasCtx();
                     canvas.width = width;
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
 
+                    // KOMPRESI: Export ke JPEG dengan kualitas 70%
                     fotoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
                     
+                    // Tampilkan hasil
                     document.getElementById('hasilFoto').src = fotoBase64;
                     document.getElementById('hasil-foto-container').classList.remove('hidden');
                     document.getElementById('btn-kamera-bawaan').innerHTML = '<i class="ph ph-camera text-2xl"></i> Ganti Foto';
@@ -436,22 +471,25 @@
             document.getElementById('btn-kamera-bawaan').innerHTML = '<i class="ph ph-camera text-2xl"></i> Ambil / Upload Foto';
         }
 
+        // Fungsi utilitas untuk mematikan track kamera (digunakan di scanner)
         function matikanKamera(stream) {
-            if (stream) { stream.getTracks().forEach(track => track.stop()); }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
         }
 
+        // --- 7. PENGIRIMAN DATA KE SERVER ---
         function kirimData() {
             const ruangan = document.getElementById('pilihRuangan').value;
-            const pjNama = document.getElementById('pjNama').value.trim();
-            const pjNim = document.getElementById('pjNim').value.trim();
-            const pjHp = document.getElementById('pjHp').value.trim();
+            const pjNama = document.getElementById('pjNama').value;
+            const pjNim = document.getElementById('pjNim').value;
+            const pjHp = document.getElementById('pjHp').value;
 
+            // Validasi longgar karena foto dan scanner sekarang opsional
             if (!ruangan) return Swal.fire('Peringatan', 'Pilih atau Scan Ruangan terlebih dahulu!', 'warning');
-            if (!pjNama || !pjNim) return Swal.fire('Peringatan', 'Data Nama & NIM PJ Wajib diisi!', 'warning');
-            if (!SCRIPT_URL || SCRIPT_URL.includes("AKfycbx_GANTIKAN")) {
-                return bukaModalSetting();
-            }
+            if (!pjNama || !pjNim) return Swal.fire('Peringatan', 'Data Mahasiswa PJ (Nama & NIM) harus diisi!', 'warning');
 
+            // UI Loading
             const btn = document.getElementById('btn-kirim');
             const teksAwal = btn.innerHTML;
             btn.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-2xl"></i> MENGIRIM...';
@@ -467,47 +505,99 @@
                 pjNama: pjNama,
                 pjNim: pjNim,
                 pjHp: pjHp,
-                foto: fotoBase64 || "", 
+                foto: fotoBase64 || "", // Dikirim kosong jika pengguna tidak upload foto
                 lokasi: lokasiGPS
             };
 
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(response => {
+            const suksesHandler = (response) => {
                 btn.innerHTML = teksAwal;
                 btn.disabled = false;
                 btn.classList.replace('bg-gray-400', 'bg-green-600');
                 
-                if(response && response.success) {
+                if(response.success) {
                     Swal.fire({
                         title: 'Berhasil Terkirim!',
-                        text: 'Laporan perkuliahan telah disimpan.',
+                        text: 'Laporan sukses disimpan.',
                         icon: 'success',
                         confirmButtonColor: '#16a34a'
                     }).then(() => {
-                        hapusFoto();
-                        document.getElementById('pjNama').value = "";
-                        document.getElementById('pjNim').value = "";
-                        document.getElementById('pjHp').value = "";
-                        document.getElementById('pilihLantai').value = "";
-                        updatePilihanRuangan();
-                        document.getElementById("box-jadwal").classList.add("hidden");
+                        window.top.location.href = window.top.location.href; 
                     });
                 } else {
-                    let errorMsg = response ? response.message : "Terjadi kesalahan pada server.";
-                    Swal.fire('Gagal Menyimpan', errorMsg, 'error');
+                    Swal.fire('Gagal Menyimpan', response.message, 'error');
                 }
-            })
-            .catch(error => {
+            };
+
+            const errorHandler = (error) => {
+                console.error(error);
                 btn.innerHTML = teksAwal;
                 btn.disabled = false;
                 btn.classList.replace('bg-gray-400', 'bg-green-600');
-                Swal.fire('Error Network', 'Gagal terhubung ke Apps Script. Pastikan jaringan internet stabil.', 'error');
-                console.error("GAS Post Error:", error);
-            });
+                Swal.fire('Error Network', 'Gagal menghubungi server. Cek koneksi Anda.', 'error');
+            };
+
+            // Menjalankan API (Mendukung GitHub Pages via Fetch atau Native Apps Script)
+            if (typeof google !== 'undefined' && google.script) {
+                google.script.run
+                    .withSuccessHandler(suksesHandler)
+                    .withFailureHandler(errorHandler)
+                    .prosesDataLaporan(payload);
+            } else {
+                const gasUrl = localStorage.getItem('gas_url');
+                if (!gasUrl) {
+                    btn.innerHTML = teksAwal;
+                    btn.disabled = false;
+                    btn.classList.replace('bg-gray-400', 'bg-green-600');
+                    if(typeof Swal !== 'undefined') Swal.fire('URL Belum Diset', 'Klik ikon Pengaturan (Gear) di kanan atas untuk memasukkan URL Apps Script.', 'warning');
+                    else alert('Silakan set URL Apps Script di menu pengaturan.');
+                    return;
+                }
+                
+                fetch(gasUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => suksesHandler(data))
+                .catch(error => errorHandler(error));
+            }
+        }
+
+        // --- 8. FUNGSI PENGATURAN / SETTING ---
+        function bukaSetting() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Pengaturan Server',
+                    html: `
+                        <div class="text-left mb-2 text-sm text-gray-600 font-semibold">URL Google Apps Script (Web App):</div>
+                        <input type="url" id="gas-url" class="swal2-input text-sm m-0 w-full" style="width: 100%; max-width: 100%; box-sizing: border-box; padding: 10px;" placeholder="https://script.google.com/macros/s/.../exec" value="${localStorage.getItem('gas_url') || ''}">
+                        <div class="text-xs text-red-500 mt-2 text-left">* Wajib diisi karena web di-hosting di GitHub.</div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonColor: '#3b82f6',
+                    confirmButtonText: 'Simpan',
+                    cancelButtonText: 'Batal',
+                    preConfirm: () => {
+                        const url = document.getElementById('gas-url').value;
+                        if (!url) Swal.showValidationMessage('URL tidak boleh kosong');
+                        return url;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        localStorage.setItem('gas_url', result.value.trim());
+                        Swal.fire('Tersimpan!', 'URL berhasil dikonfigurasi.', 'success');
+                    }
+                });
+            } else {
+                // Fallback jika Swal gagal dimuat
+                const currentUrl = localStorage.getItem('gas_url') || '';
+                const newUrl = prompt('Masukkan URL Google Apps Script (Web App):', currentUrl);
+                if (newUrl !== null && newUrl.trim() !== '') {
+                    localStorage.setItem('gas_url', newUrl.trim());
+                    alert('URL berhasil disimpan!');
+                }
+            }
         }
     </script>
 </body>
