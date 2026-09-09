@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
+html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -63,10 +62,6 @@
         <div class="relative text-center mb-6 mt-2">
             <h1 class="text-2xl font-bold text-gray-800">Cek Kehadiran Kelas</h1>
             <p class="text-gray-500 text-sm">Sistem Laporan Real-Time Perkuliahan</p>
-            <!-- Tombol Pengaturan (Gear) -->
-            <button type="button" onclick="bukaSetting()" class="absolute top-0 right-0 p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors">
-                <i class="ph ph-gear text-2xl"></i>
-            </button>
         </div>
 
         <!-- STEP 1: LOKASI & BARCODE -->
@@ -288,6 +283,8 @@
                 }
             };
 
+            const gasUrl = "https://script.google.com/macros/s/AKfycbze1Arzn-tJnrecjdJQ8A3TAZZ-1TgQ1l7o_GCU-C6yXG71Y_29aLN-qneagG5V6w_7/exec";
+
             // Menjalankan API ke Google Apps Script (Mendukung GitHub Pages via Fetch)
             if (typeof google !== 'undefined' && google.script) {
                 google.script.run
@@ -295,22 +292,14 @@
                     .withFailureHandler(() => updateUI({status: false}))
                     .getJadwalSekarang(ruangan);
             } else {
-                const gasUrl = localStorage.getItem('gas_url');
-                if (!gasUrl) {
-                    document.getElementById("loading-jadwal").classList.add("hidden");
-                    if(typeof Swal !== 'undefined') Swal.fire('URL Belum Diset', 'Klik ikon Pengaturan (Gear) di kanan atas untuk memasukkan URL Apps Script.', 'warning');
-                    else alert('URL Apps Script belum diset. Klik ikon Gear di atas.');
-                    return;
-                }
-                
                 fetch(gasUrl + "?action=getJadwal&ruangan=" + encodeURIComponent(ruangan))
                     .then(response => response.json())
                     .then(data => updateUI(data))
                     .catch(error => {
                         console.error("Error Fetch:", error);
                         updateUI({status: false});
-                        if(typeof Swal !== 'undefined') Swal.fire('Koneksi Gagal', 'Gagal memuat jadwal. Pastikan URL Apps Script benar.', 'error');
-                        else alert('Gagal memuat jadwal. Cek URL Apps Script.');
+                        if(typeof Swal !== 'undefined') Swal.fire('Koneksi Gagal', 'Gagal memuat jadwal. Pastikan internet Anda aktif.', 'error');
+                        else alert('Gagal memuat jadwal.');
                     });
             }
         }
@@ -536,6 +525,8 @@
                 Swal.fire('Error Network', 'Gagal menghubungi server. Cek koneksi Anda.', 'error');
             };
 
+            const gasUrl = "https://script.google.com/macros/s/AKfycbze1Arzn-tJnrecjdJQ8A3TAZZ-1TgQ1l7o_GCU-C6yXG71Y_29aLN-qneagG5V6w_7/exec";
+
             // Menjalankan API (Mendukung GitHub Pages via Fetch atau Native Apps Script)
             if (typeof google !== 'undefined' && google.script) {
                 google.script.run
@@ -543,16 +534,6 @@
                     .withFailureHandler(errorHandler)
                     .prosesDataLaporan(payload);
             } else {
-                const gasUrl = localStorage.getItem('gas_url');
-                if (!gasUrl) {
-                    btn.innerHTML = teksAwal;
-                    btn.disabled = false;
-                    btn.classList.replace('bg-gray-400', 'bg-green-600');
-                    if(typeof Swal !== 'undefined') Swal.fire('URL Belum Diset', 'Klik ikon Pengaturan (Gear) di kanan atas untuk memasukkan URL Apps Script.', 'warning');
-                    else alert('Silakan set URL Apps Script di menu pengaturan.');
-                    return;
-                }
-                
                 fetch(gasUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -561,42 +542,6 @@
                 .then(response => response.json())
                 .then(data => suksesHandler(data))
                 .catch(error => errorHandler(error));
-            }
-        }
-
-        // --- 8. FUNGSI PENGATURAN / SETTING ---
-        function bukaSetting() {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Pengaturan Server',
-                    html: `
-                        <div class="text-left mb-2 text-sm text-gray-600 font-semibold">URL Google Apps Script (Web App):</div>
-                        <input type="url" id="gas-url" class="swal2-input text-sm m-0 w-full" style="width: 100%; max-width: 100%; box-sizing: border-box; padding: 10px;" placeholder="https://script.google.com/macros/s/AKfycbze1Arzn-tJnrecjdJQ8A3TAZZ-1TgQ1l7o_GCU-C6yXG71Y_29aLN-qneagG5V6w_7/exec" value="${localStorage.getItem('gas_url') || ''}">
-                        <div class="text-xs text-red-500 mt-2 text-left">* Wajib diisi karena web di-hosting di GitHub.</div>
-                    `,
-                    showCancelButton: true,
-                    confirmButtonColor: '#3b82f6',
-                    confirmButtonText: 'Simpan',
-                    cancelButtonText: 'Batal',
-                    preConfirm: () => {
-                        const url = document.getElementById('gas-url').value;
-                        if (!url) Swal.showValidationMessage('URL tidak boleh kosong');
-                        return url;
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        localStorage.setItem('gas_url', result.value.trim());
-                        Swal.fire('Tersimpan!', 'URL berhasil dikonfigurasi.', 'success');
-                    }
-                });
-            } else {
-                // Fallback jika Swal gagal dimuat
-                const currentUrl = localStorage.getItem('gas_url') || '';
-                const newUrl = prompt('Masukkan URL Google Apps Script (Web App):', currentUrl);
-                if (newUrl !== null && newUrl.trim() !== '') {
-                    localStorage.setItem('gas_url', newUrl.trim());
-                    alert('URL berhasil disimpan!');
-                }
             }
         }
     </script>
