@@ -89,7 +89,8 @@
             
             <select id="pilihLantai" class="input-besar mt-2" onchange="updatePilihanRuangan()">
                 <option value="">-- Pilih Lantai / Gedung --</option>
-                <option value="Lantai 1">Lantai 1 & Laboratorium</option>
+                <option vakue="Laboratorium">Laboratorium</option>
+                <option value="Lantai 1">Lantai 1</option>
                 <option value="Lantai 2">Lantai 2</option>
                 <option value="Lantai 3">Lantai 3</option>
                 <option value="Lantai 4">Lantai 4</option>
@@ -173,7 +174,7 @@
         // --- SETUP DATABASE RUANGAN APLIKASI Su_Su ---
         const dbRuangan = {
             "Laboratorium": ["Lab PGSD", "Lab MTK", "Lab Bio", "Lab Bing", "Lab PBI", "Lab Kimia", "Lab IPA", "Lab BK", "Lab SOS", "Lab PAUD", "Lab Fisika", "Lab PPKN", "Lab Sejarah", "Lab PNF", "Lab PKH", "Lab PSP", "Lab PVTM", "Lab PVTE"], 
-            "Lantai 1": ["CC101", "CC102", "CC103", "CC104", "CC105", "CC106", "CC107", "CC108", "CC109", "CC110", "CC111", "CC112", "CC113", "CC114", "CC115", "CC116", "CC117", "CC118"],
+            "Lantai 1": ["CC101", "CC102", "CC103", "CC104", "CC105", "CC106", "CC107", "CC108", "CC109", "CC110", "CC111", "CC112", "CC113", "CC114", "CC115", "CC116"],
             "Lantai 2": ["CC201", "CC202", "CC203", "CC204", "CC205", "CC206", "CC207", "CC208", "CC209", "CC210", "CC211", "CC212", "CC213", "CC214", "CC215", "CC216", "CC217", "CC218"],
             "Lantai 3": ["CC301", "CC302", "CC303", "CC304", "CC305", "CC306", "CC307", "CC308", "CC309", "CC310", "CC311", "CC312", "CC313", "CC314", "CC315", "CC316", "CC317", "CC318"],
             "Lantai 4": ["CC401", "CC402", "CC403", "CC404", "CC405", "CC406", "CC407", "CC408", "CC409", "CC410", "CC411", "CC412", "CC413", "CC414", "CC415", "CC416", "CC417", "CC418"],
