@@ -65,7 +65,7 @@
             <p class="text-gray-500 text-sm">Sistem Laporan Real-Time Perkuliahan</p>
         </div>
 
-        <!-- STEP 1: LOKASI & BARCODE -->
+        <!-- LOKASI & BARCODE Su_Su -->
         <div class="step-card">
             <div class="flex items-center gap-2 mb-4">
                 <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">1</span>
@@ -122,7 +122,7 @@
             </div>
         </div>
 
-        <!-- STEP 2: DATA MAHASISWA -->
+        <!-- DATA MAHASISWA Su_Su -->
         <div class="step-card">
             <div class="flex items-center gap-2 mb-4">
                 <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">2</span>
@@ -135,11 +135,11 @@
             <input type="tel" id="pjHp" class="input-besar" placeholder="No. Handphone PJ">
         </div>
 
-        <!-- STEP 3: FOTO BUKTI -->
+        <!-- FOTO BUKTI Su_Su -->
         <div class="step-card">
             <div class="flex items-center gap-2 mb-4">
                 <span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">3</span>
-                <h2 class="text-lg font-bold text-gray-800">Foto Bukti Perkuliahan</h2>
+                <h2 class="text-lg font-bold text-gray-800">Foto Bukti Perkuliahan (Optional)</h2>
             </div>
             
             <div id="hasil-foto-container" class="hidden text-center mb-4">
@@ -170,10 +170,11 @@
     </div>
 
     <script>
-        // --- 1. SETUP DATABASE RUANGAN ---
+        // --- SETUP DATABASE RUANGAN APLIKASI Su_Su ---
         const dbRuangan = {
-            "Lantai 1": ["Lab PGSD", "Lab MTK", "Lab Bio", "Lab Bing", "Lab PBI", "Lab Kimia", "Lab IPA", "Lab BK", "Lab SOS", "Lab PAUD", "Lab Fisika", "Lab PPKN", "Lab Sejarah", "Lab PNF", "Lab PKH", "Lab PSP", "Lab PVTM", "Lab PVTE", "CC101", "CC102", "CC103", "CC104", "CC105", "CC106", "CC107", "CC108", "CC109", "CC110", "CC111", "CC112", "CC113", "CC114", "CC115", "CC116", "CC117", "CC118"],
-            "Lantai 2": ["CC201", "CC202", "CC203", "CC204", "CC205", "CC206", "CC207", "CC208", "CC209", "CC210", "CC211", "CC212", "CC213", "CC214", "CC215"],
+            "Laboratorium": ["Lab PGSD", "Lab MTK", "Lab Bio", "Lab Bing", "Lab PBI", "Lab Kimia", "Lab IPA", "Lab BK", "Lab SOS", "Lab PAUD", "Lab Fisika", "Lab PPKN", "Lab Sejarah", "Lab PNF", "Lab PKH", "Lab PSP", "Lab PVTM", "Lab PVTE"], 
+            "Lantai 1": ["CC101", "CC102", "CC103", "CC104", "CC105", "CC106", "CC107", "CC108", "CC109", "CC110", "CC111", "CC112", "CC113", "CC114", "CC115", "CC116", "CC117", "CC118"],
+            "Lantai 2": ["CC201", "CC202", "CC203", "CC204", "CC205", "CC206", "CC207", "CC208", "CC209", "CC210", "CC211", "CC212", "CC213", "CC214", "CC215", "CC216", "CC217", "CC218"],
             "Lantai 3": ["CC301", "CC302", "CC303", "CC304", "CC305", "CC306", "CC307", "CC308", "CC309", "CC310", "CC311", "CC312", "CC313", "CC314", "CC315", "CC316", "CC317", "CC318"],
             "Lantai 4": ["CC401", "CC402", "CC403", "CC404", "CC405", "CC406", "CC407", "CC408", "CC409", "CC410", "CC411", "CC412", "CC413", "CC414", "CC415", "CC416", "CC417", "CC418"],
             "Lainnya": ["Online", "Sekolah"]
@@ -199,7 +200,7 @@
             return { canvas, ctx };
         }
 
-        // --- 3. INISIALISASI (GEOLOCATION) ---
+        // --- INISIALISASI APLIKASI Su_Su (GEOLOCATION) ---
         window.onload = function() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -219,7 +220,7 @@
             }
         };
 
-        // --- 4. FUNGSI UI DROPDOWN & JADWAL ---
+        // --- DROPDOWN & JADWAL APLIKASI Su_Su ---
         function updatePilihanRuangan() {
             try {
                 const lantai = document.getElementById("pilihLantai").value;
@@ -248,7 +249,7 @@
             let ruangan = kodeDariScanner || document.getElementById('pilihRuangan').value;
             if (!ruangan) return;
 
-            // Jika dipanggil dari scanner, sinkronkan ke dropdown manual
+            // If dipanggil dari scanner, sinkronkan ke dropdown manual
             if(kodeDariScanner) {
                 let selectRuangan = document.getElementById('pilihRuangan');
                 let optionExists = Array.from(selectRuangan.options).some(opt => opt.value === kodeDariScanner);
@@ -263,7 +264,7 @@
                 selectRuangan.disabled = false;
             }
 
-            // UI Loading
+            // UI Loading aplikasi Su_Su
             document.getElementById("box-jadwal").classList.remove("hidden");
             document.getElementById("loading-jadwal").classList.remove("hidden");
             document.getElementById("info-jadwal").classList.add("hidden");
@@ -305,9 +306,9 @@
             }
         }
 
-        // --- 5. FUNGSI SCANNER BARCODE (API low-level stabil) ---
+        // --- FUNGSI SCANNER BARCODE (API low-level stabil) ---
         async function mulaiScan() {
-            // Pengecekan perangkat sebelum mengakses media (Mencegah HANG)
+            // Pengecekan perangkat aplikasi Su_Su sebelum mengakses media (Mencegah HANG)
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 if(typeof Swal !== 'undefined') Swal.fire('Kamera Tidak Didukung', 'Browser ini tidak mendukung akses kamera langsung. Silakan pilih ruangan manual.', 'error');
                 else alert('Kamera tidak didukung di browser ini.');
@@ -335,7 +336,7 @@
                 }
 
                 video.srcObject = streamBelakang;
-                video.setAttribute("playsinline", true); // Penting untuk iOS/Safari
+                video.setAttribute("playsinline", true); // Penting aplikasi Su_Su untuk iOS/Safari
                 video.play();
 
                 container.style.display = 'block';
@@ -402,7 +403,7 @@
                 timer: 1500,
                 showConfirmButton: false
             }).then(() => {
-                ruanganTerpilih(hasilTeks); // Jalankan cek jadwal
+                ruanganTerpilih(hasilTeks); // Jalankan cek jadwal aplikasi Su_Su
             });
         }
 
@@ -415,7 +416,7 @@
         }
 
 
-        // --- 6. FUNGSI FOTO BUKTI (NATIVE & KOMPRESI) ---
+        // --- FUNGSI FOTO BUKTI (NATIVE & KOMPRESI) aplikasi Su_Su ---
         function prosesFotoBawaan(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -444,7 +445,7 @@
                     // KOMPRESI: Export ke JPEG dengan kualitas 70%
                     fotoBase64 = canvas.toDataURL('image/jpeg', 0.7); 
                     
-                    // Tampilkan hasil
+                    // Tampilkan hasil aplikasi Su_Su
                     document.getElementById('hasilFoto').src = fotoBase64;
                     document.getElementById('hasil-foto-container').classList.remove('hidden');
                     document.getElementById('btn-kamera-bawaan').innerHTML = '<i class="ph ph-camera text-2xl"></i> Ganti Foto';
@@ -468,18 +469,18 @@
             }
         }
 
-        // --- 7. PENGIRIMAN DATA KE SERVER ---
+        // --- 7. PENGIRIMAN DATA KE SERVER Su_Su ---
         function kirimData() {
             const ruangan = document.getElementById('pilihRuangan').value;
             const pjNama = document.getElementById('pjNama').value;
             const pjNim = document.getElementById('pjNim').value;
             const pjHp = document.getElementById('pjHp').value;
 
-            // Validasi longgar karena foto dan scanner sekarang opsional
+            // Opsional
             if (!ruangan) return Swal.fire('Peringatan', 'Pilih atau Scan Ruangan terlebih dahulu!', 'warning');
             if (!pjNama || !pjNim) return Swal.fire('Peringatan', 'Data Mahasiswa PJ (Nama & NIM) harus diisi!', 'warning');
 
-            // UI Loading
+            // Loading
             const btn = document.getElementById('btn-kirim');
             const teksAwal = btn.innerHTML;
             btn.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-2xl"></i> MENGIRIM...';
@@ -495,7 +496,7 @@
                 pjNama: pjNama,
                 pjNim: pjNim,
                 pjHp: pjHp,
-                foto: fotoBase64 || "", // Dikirim kosong jika pengguna tidak upload foto
+                foto: fotoBase64 || "", // Dikirim kosong jika pengguna tidak upload foto pada aplikasi Su_Su
                 lokasi: lokasiGPS
             };
 
@@ -528,7 +529,7 @@
 
             const gasUrl = "https://script.google.com/macros/s/AKfycbze1Arzn-tJnrecjdJQ8A3TAZZ-1TgQ1l7o_GCU-C6yXG71Y_29aLN-qneagG5V6w_7/exec";
 
-            // Menjalankan API (Mendukung GitHub Pages via Fetch atau Native Apps Script)
+            // Menjalankan API Su_Su 
             if (typeof google !== 'undefined' && google.script) {
                 google.script.run
                     .withSuccessHandler(suksesHandler)
